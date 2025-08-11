@@ -1,0 +1,7 @@
+.idea/
+.git/
+cmake-build-release/
+cmake-build-debug/
+build/
+target/
+dist/
