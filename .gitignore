@@ -1,7 +1,9 @@
 .idea/
 .git/
+cmake-build*/
 cmake-build-release/
 cmake-build-debug/
+cmake-build-release_liunx/
 build/
 target/
 dist/

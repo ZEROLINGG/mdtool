@@ -27,11 +27,11 @@
 
 /**
  * @namespace encoding
- * @brief æä¾›äº†ç”¨äºæ£€æµ‹å’Œå¤„ç†æ–‡æœ¬ç¼–ç çš„å®ç”¨å‡½æ•°.
+ * @brief Ìá¹©ÁËÓÃÓÚ¼ì²âºÍ´¦ÀíÎÄ±¾±àÂëµÄÊµÓÃº¯Êı.
  */
 namespace encoding {
 
-    // é”™è¯¯ç±»å‹å®šä¹‰
+    // ´íÎóÀàĞÍ¶¨Òå
     enum class EncodingError {
         FileNotFound,
         NotRegularFile,
@@ -44,17 +44,17 @@ namespace encoding {
         InvalidInput
     };
 
-    // ç»“æœç±»å‹
+    // ½á¹ûÀàĞÍ
     template<typename T>
     using Result = std::expected<T, EncodingError>;
 
-    // RAII å°è£…ç±»
+    // RAII ·â×°Àà
     class UchardetDetector {
     public:
         UchardetDetector();
         ~UchardetDetector();
 
-        // ç¦ç”¨æ‹·è´ï¼Œå…è®¸ç§»åŠ¨
+        // ½ûÓÃ¿½±´£¬ÔÊĞíÒÆ¶¯
         UchardetDetector(const UchardetDetector&) = delete;
         UchardetDetector& operator=(const UchardetDetector&) = delete;
         UchardetDetector(UchardetDetector&& other) noexcept;
@@ -72,7 +72,7 @@ namespace encoding {
         IconvConverter(std::string_view from, std::string_view to);
         ~IconvConverter();
 
-        // ç¦ç”¨æ‹·è´ï¼Œå…è®¸ç§»åŠ¨
+        // ½ûÓÃ¿½±´£¬ÔÊĞíÒÆ¶¯
         IconvConverter(const IconvConverter&) = delete;
         IconvConverter& operator=(const IconvConverter&) = delete;
         IconvConverter(IconvConverter&& other) noexcept;
@@ -85,37 +85,37 @@ namespace encoding {
     };
 
     /**
-     * @brief æ£€æµ‹æ–‡ä»¶çš„æ–‡æœ¬ç¼–ç 
-     * @param filePath æ–‡ä»¶çš„è·¯å¾„
-     * @return æ£€æµ‹åˆ°çš„ç¼–ç åç§°æˆ–é”™è¯¯ä¿¡æ¯
+     * @brief ¼ì²âÎÄ¼şµÄÎÄ±¾±àÂë
+     * @param filePath ÎÄ¼şµÄÂ·¾¶
+     * @return ¼ì²âµ½µÄ±àÂëÃû³Æ»ò´íÎóĞÅÏ¢
      */
     Result<std::string> detectFile(const std::filesystem::path& filePath);
 
     /**
-     * @brief æ£€æµ‹å­—ç¬¦ä¸²çš„æ–‡æœ¬ç¼–ç 
-     * @param str è¦æ£€æµ‹çš„å­—ç¬¦ä¸²
-     * @return æ£€æµ‹åˆ°çš„ç¼–ç åç§°æˆ–é”™è¯¯ä¿¡æ¯
+     * @brief ¼ì²â×Ö·û´®µÄÎÄ±¾±àÂë
+     * @param str Òª¼ì²âµÄ×Ö·û´®
+     * @return ¼ì²âµ½µÄ±àÂëÃû³Æ»ò´íÎóĞÅÏ¢
      */
     Result<std::string> detectString(std::string_view str);
 
     /**
-     * @brief å°†å­—ç¬¦ä¸²ä»ä¸€ç§ç¼–ç è½¬æ¢ä¸ºå¦ä¸€ç§ç¼–ç 
-     * @param input è¾“å…¥å­—ç¬¦ä¸²
-     * @param fromEncoding æºç¼–ç 
-     * @param toEncoding ç›®æ ‡ç¼–ç 
-     * @return è½¬æ¢åçš„å­—ç¬¦ä¸²æˆ–é”™è¯¯ä¿¡æ¯
+     * @brief ½«×Ö·û´®´ÓÒ»ÖÖ±àÂë×ª»»ÎªÁíÒ»ÖÖ±àÂë
+     * @param input ÊäÈë×Ö·û´®
+     * @param fromEncoding Ô´±àÂë
+     * @param toEncoding Ä¿±ê±àÂë
+     * @return ×ª»»ºóµÄ×Ö·û´®»ò´íÎóĞÅÏ¢
      */
     Result<std::string> convertString(std::string_view input,
                                     std::string_view fromEncoding,
                                     std::string_view toEncoding);
 
     /**
-     * @brief è½¬æ¢æ–‡ä»¶ç¼–ç 
-     * @param inputPath è¾“å…¥æ–‡ä»¶è·¯å¾„
-     * @param outputPath è¾“å‡ºæ–‡ä»¶è·¯å¾„
-     * @param fromEncoding æºç¼–ç ï¼ˆå¦‚æœä¸ºç©ºï¼Œåˆ™è‡ªåŠ¨æ£€æµ‹ï¼‰
-     * @param toEncoding ç›®æ ‡ç¼–ç 
-     * @return æˆåŠŸæˆ–é”™è¯¯ä¿¡æ¯
+     * @brief ×ª»»ÎÄ¼ş±àÂë
+     * @param inputPath ÊäÈëÎÄ¼şÂ·¾¶
+     * @param outputPath Êä³öÎÄ¼şÂ·¾¶
+     * @param fromEncoding Ô´±àÂë£¨Èç¹ûÎª¿Õ£¬Ôò×Ô¶¯¼ì²â£©
+     * @param toEncoding Ä¿±ê±àÂë
+     * @return ³É¹¦»ò´íÎóĞÅÏ¢
      */
     Result<void> convertFile(const std::filesystem::path& inputPath,
                            const std::filesystem::path& outputPath,
@@ -123,23 +123,23 @@ namespace encoding {
                            std::string_view toEncoding = "UTF-8");
 
     /**
-     * @brief å°†å­—ç¬¦ä¸²è½¬æ¢ä¸ºUTF-8ç¼–ç 
-     * @param input è¾“å…¥å­—ç¬¦ä¸²
-     * @param fromEncoding æºç¼–ç ï¼ˆå¦‚æœä¸ºç©ºï¼Œåˆ™è‡ªåŠ¨æ£€æµ‹ï¼‰
-     * @return UTF-8ç¼–ç çš„å­—ç¬¦ä¸²æˆ–é”™è¯¯ä¿¡æ¯
+     * @brief ½«×Ö·û´®×ª»»ÎªUTF-8±àÂë
+     * @param input ÊäÈë×Ö·û´®
+     * @param fromEncoding Ô´±àÂë£¨Èç¹ûÎª¿Õ£¬Ôò×Ô¶¯¼ì²â£©
+     * @return UTF-8±àÂëµÄ×Ö·û´®»ò´íÎóĞÅÏ¢
      */
     Result<std::string> toUTF8(std::string_view input,
                              std::string_view fromEncoding = "");
 
     /**
-     * @brief æ‰¹é‡è½¬æ¢æ–‡ä»¶ç¼–ç 
-     * @param inputDir è¾“å…¥ç›®å½•
-     * @param outputDir è¾“å‡ºç›®å½•
-     * @param filePattern æ–‡ä»¶åŒ¹é…æ¨¡å¼ï¼ˆå¦‚ "*.txt"ï¼‰
-     * @param fromEncoding æºç¼–ç ï¼ˆç©ºåˆ™è‡ªåŠ¨æ£€æµ‹ï¼‰
-     * @param toEncoding ç›®æ ‡ç¼–ç 
-     * @param recursive æ˜¯å¦é€’å½’å¤„ç†å­ç›®å½•
-     * @return å¤„ç†æˆåŠŸçš„æ–‡ä»¶æ•°é‡æˆ–é”™è¯¯ä¿¡æ¯
+     * @brief ÅúÁ¿×ª»»ÎÄ¼ş±àÂë
+     * @param inputDir ÊäÈëÄ¿Â¼
+     * @param outputDir Êä³öÄ¿Â¼
+     * @param filePattern ÎÄ¼şÆ¥ÅäÄ£Ê½£¨Èç "*.txt"£©
+     * @param fromEncoding Ô´±àÂë£¨¿ÕÔò×Ô¶¯¼ì²â£©
+     * @param toEncoding Ä¿±ê±àÂë
+     * @param recursive ÊÇ·ñµİ¹é´¦Àí×ÓÄ¿Â¼
+     * @return ´¦Àí³É¹¦µÄÎÄ¼şÊıÁ¿»ò´íÎóĞÅÏ¢
      */
     Result<size_t> convertDirectory(const std::filesystem::path& inputDir,
                                   const std::filesystem::path& outputDir,
@@ -148,12 +148,12 @@ namespace encoding {
                                   std::string_view toEncoding = "UTF-8",
                                   bool recursive = false);
 
-    // ä¾¿åˆ©å‡½æ•°
+    // ±ãÀûº¯Êı
     std::string errorToString(EncodingError error);
     bool isValidEncoding(std::string_view encoding);
     std::vector<std::string> getSupportedEncodings();
 
-    // è·å–æ§åˆ¶å°ç¼–ç ï¼Œå¤±è´¥è¿”å›ç©ºå­—ç¬¦ä¸²
+    // »ñÈ¡¿ØÖÆÌ¨±àÂë£¬Ê§°Ü·µ»Ø¿Õ×Ö·û´®
     std::string getConsoleEncoding();
 
 } // namespace encoding

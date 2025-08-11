@@ -7,6 +7,7 @@
 #define STRUCT_H
 #include <string>
 #include <filesystem>
+#include <climits>
 
 struct Options {
     std::filesystem::path path;

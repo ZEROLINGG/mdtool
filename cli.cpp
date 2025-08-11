@@ -60,9 +60,8 @@ CliReturn cli_work(const int argc, char* argv[]) {
         if (auto utf8_result = encoding::toUTF8(language, encoding::getConsoleEncoding())) {
             options.language = *utf8_result;  // 获取成功结果
         } else {
-            LOG_ERROR("语言编码转换失败");
-            ret.success = false;
-            return ret;
+            LOG_ERROR("语言编码转换失败,尝试不进行转换");
+            options.language = language;
         }
 
         ret.success = true;

@@ -10,13 +10,13 @@ std::filesystem::path to_fs_path(const std::string& path_str) {
 #ifdef _WIN32
     const int wideLen = MultiByteToWideChar(CP_ACP, 0, path_str.c_str(), -1, nullptr, 0);
     if (wideLen == 0) {
-        LOG_ERROR("è·¯å¾„è½¬æ¢å¤±è´¥: " + path_str);
+        LOG_ERROR("Â·¾¶×ª»»Ê§°Ü: " + path_str);
         return { std::wstring{} };
     }
 
     std::wstring wideStr(wideLen, L'\0');
     MultiByteToWideChar(CP_ACP, 0, path_str.c_str(), -1, &wideStr[0], wideLen);
-    // å»é™¤æœ«å°¾å¤šä½™çš„'\0'
+    // È¥³ıÄ©Î²¶àÓàµÄ'\0'
     wideStr.resize(wideLen - 1);
 
     return { wideStr };
@@ -28,10 +28,10 @@ std::filesystem::path to_fs_path(const std::string& path_str) {
 std::string out_fs_path(const std::filesystem::path& path) {
 #ifdef _WIN32
     const std::wstring& wideStr = path.native();
-    // å…ˆè·å–è½¬æ¢åçš„å­—ç¬¦ä¸²é•¿åº¦ï¼ˆåŒ…å«æœ«å°¾'\0'ï¼‰
+    // ÏÈ»ñÈ¡×ª»»ºóµÄ×Ö·û´®³¤¶È£¨°üº¬Ä©Î²'\0'£©
     const int narrowLen = WideCharToMultiByte(CP_ACP, 0, wideStr.c_str(), -1, nullptr, 0, nullptr, nullptr);
     if (narrowLen == 0) {
-        LOG_ERROR("è·¯å¾„è½¬æ¢å¤±è´¥: ");
+        LOG_ERROR("Â·¾¶×ª»»Ê§°Ü: ");
         std::wcerr << wideStr << std::endl;
 
         return {};
@@ -39,7 +39,7 @@ std::string out_fs_path(const std::filesystem::path& path) {
 
     std::string narrowStr(narrowLen, '\0');
     WideCharToMultiByte(CP_ACP, 0, wideStr.c_str(), -1, &narrowStr[0], narrowLen, nullptr, nullptr);
-    // å»é™¤æœ«å°¾å¤šä½™çš„'\0'
+    // È¥³ıÄ©Î²¶àÓàµÄ'\0'
     narrowStr.resize(narrowLen - 1);
 
     return narrowStr;

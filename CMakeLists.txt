@@ -21,5 +21,7 @@ add_executable(mdtool main.cpp
 )
 target_link_libraries(mdtool PRIVATE
         uchardet
-        iconv
 )
+if (WIN32 OR APPLE)
+    target_link_libraries(mdtool PRIVATE iconv)
+endif()
