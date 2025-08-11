@@ -12,10 +12,12 @@
 CliReturn cli_work(const int argc, char* argv[]) {
 
 
-    CLI::App app{"mdtool - Markdown代码块处理工具"};
+    CLI::App app{"mdtool - Markdown代码块处理工具 1.0.0"};
     Options options;
     std::string path_str;
     std::string language;
+
+    app.set_version_flag("-v,--version", "显示程序版本信息", "mdtool 1.0.0");
 
     // 必需参数
     app.add_option("-p,--path", path_str, "单个md文档路径，或包含md文档的文件夹路径")
