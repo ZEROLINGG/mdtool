@@ -5,7 +5,6 @@
 
 
 int main(const int argc, char* argv[]) {
-    // coding_test();
     const auto [options, funcPtr, success] = cli_work(argc, argv);
     if (!success) {
         return 1;

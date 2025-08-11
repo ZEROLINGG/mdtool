@@ -158,7 +158,5 @@ namespace encoding {
 
 } // namespace encoding
 
-// 测试函数
-int coding_test();
 
 #endif //CODING_H
