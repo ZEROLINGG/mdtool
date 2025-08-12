@@ -10,13 +10,11 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <expected>
 #include <uchardet/uchardet.h>
 #include <iconv.h>
-#include <cstring>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -60,8 +58,8 @@ namespace encoding {
         UchardetDetector(UchardetDetector&& other) noexcept;
         UchardetDetector& operator=(UchardetDetector&& other) noexcept;
 
-        Result<std::string> detect(std::string_view data);
-        void reset();
+        [[nodiscard]] Result<std::string> detect(std::string_view data) const;
+        void reset() const;
 
     private:
         uchardet_t detector_;
@@ -78,7 +76,7 @@ namespace encoding {
         IconvConverter(IconvConverter&& other) noexcept;
         IconvConverter& operator=(IconvConverter&& other) noexcept;
 
-        Result<std::string> convert(std::string_view input);
+        [[nodiscard]] Result<std::string> convert(std::string_view input) const;
 
     private:
         iconv_t cd_;

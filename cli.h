@@ -14,6 +14,7 @@ struct Options {
     std::string language;
     std::string option;
     unsigned int line = UINT_MAX;
+    double kDefaultPathScanTimeout = 1.5;
     bool addl = false;
     bool updl = false;
     bool rmvl = false;

@@ -1,6 +1,6 @@
 // tools/tools.cpp
 // Created by zerox on 25-8-10.
-//
+// 使用c++  23
 #include "tools.h"
 #include "tool_core.h"
 #include <iostream>
@@ -19,13 +19,14 @@ namespace tools {
     namespace fs = std::filesystem;
 
     namespace { // 使用匿名命名空间来隐藏辅助函数和常量
-        constexpr double kDefaultPathScanTimeout = 1.5;
+        // constexpr double kDefaultPathScanTimeout = 1.5;
+        // 将kDefaultPathScanTimeout移动到Options.kDefaultPathScanTimeout中了
 
         // 判断是否是md文档
         bool is_markdown(const fs::path& path) {
             auto ext = path.extension().string();
-            std::transform(ext.begin(), ext.end(), ext.begin(),
-                          [](unsigned char c) { return std::tolower(c); });
+            std::ranges::transform(ext, ext.begin(),
+                [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
             return ext == ".md" || ext == ".markdown";
         }
 
@@ -47,16 +48,15 @@ namespace tools {
             if (fs::is_directory(path, ec)) {
                 if (ec) return PATH_ERROR;
 
-                auto start_time = std::chrono::steady_clock::now();
+                const auto start_time = std::chrono::steady_clock::now();
                 try {
                     bool found_markdown = false;
                     for (const auto& entry : fs::recursive_directory_iterator(path, fs::directory_options::skip_permission_denied)) {
                         auto current_time = std::chrono::steady_clock::now();
-                        const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count();
 
-                        if (duration > timeout * 1000) {
+                        if (const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time).count(); static_cast<double>(duration) > timeout * 1000) {
                             return VERY_BIG;
-                        }
+    }
 
                         if (entry.is_regular_file(ec) && !ec && is_markdown(entry.path())) {
                             found_markdown = true;
@@ -78,11 +78,11 @@ namespace tools {
         using FileProcessor = std::function<bool(const fs::path&)>;
 
         // 通用的处理函数
-        void process_markdown_paths(const fs::path& target_path, const FileProcessor& processor) {
-            switch (detect_path_type(target_path, kDefaultPathScanTimeout)) {
+        void process_markdown_paths(const fs::path& target_path, const double timeout, const FileProcessor& processor) {
+            switch (detect_path_type(target_path, timeout)) {
                 case VERY_BIG:
                     LOG_WARN("目录过大或处理超时，请确认路径是否正确。");
-                    LOG_WARN("如果需要处理大目录请启用 --big 选项（暂不实现）");
+                    LOG_WARN("如果需要处理大目录请设定--timeout");
                     LOG_WARN("路径: [" + out_fs_path(target_path) + "]");
                     break;
                 case PATH_ERROR:
@@ -140,7 +140,7 @@ namespace tools {
             LOG_WARN("请使用-l 添加语言");
             return;
         }
-        process_markdown_paths(Options.path, [&](const fs::path& p) {
+        process_markdown_paths(Options.path, Options.kDefaultPathScanTimeout, [&](const fs::path& p) {
             return addl_(p, Options.language);
         });
     }
@@ -150,19 +150,19 @@ namespace tools {
             LOG_WARN("请使用-l 添加语言");
             return;
         }
-        process_markdown_paths(Options.path, [&](const fs::path& p) {
+        process_markdown_paths(Options.path, Options.kDefaultPathScanTimeout, [&](const fs::path& p) {
             return updl_(p, Options.language);
         });
     }
 
     void rmvl(const Options& Options) {
-        process_markdown_paths(Options.path, [&](const fs::path& p) {
+        process_markdown_paths(Options.path, Options.kDefaultPathScanTimeout, [&](const fs::path& p) {
             return rmvl_(p);
         });
     }
 
-    void delcl(const Options& options) {
-        if (options.line == UINT_MAX) {
+    void delcl(const Options& Options) {
+        if (Options.line == UINT_MAX) {
             LOG_WARN("使用默认值将会清空代码块！！！");
             LOG_WARN("请输入 y 执行操作（y/N）");
             std::string confirm;
@@ -174,8 +174,8 @@ namespace tools {
                 return;
             }
         }
-        process_markdown_paths(options.path, [&](const fs::path& p) {
-            return delcl_(p, options.line);
+        process_markdown_paths(Options.path, Options.kDefaultPathScanTimeout, [&](const fs::path& p) {
+            return delcl_(p, Options.line);
         });
     }
 
