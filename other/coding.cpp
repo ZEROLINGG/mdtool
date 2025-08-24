@@ -68,7 +68,7 @@ void UchardetDetector::reset() const {
 }
 
 // IconvConverter ÊµÏÖ
-IconvConverter::IconvConverter(std::string_view from, std::string_view to)
+IconvConverter::IconvConverter(const std::string_view from, const std::string_view to)
     : cd_(iconv_open(std::string(to).c_str(), std::string(from).c_str())) {}
 
 IconvConverter::~IconvConverter() {
@@ -217,7 +217,7 @@ Result<void> convertFile(const std::filesystem::path& inputPath,
         if (sourceEncoding == "unknown" || sourceEncoding == "empty") {
             return std::unexpected(EncodingError::DetectionFailed);
         }
-        LOG_INFO(std::format("Detected encoding: {}", sourceEncoding));
+        LOG_INFO("Detected encoding: " + sourceEncoding);
     }
 
     // ×ª»»±àÂë
@@ -275,12 +275,11 @@ Result<std::string> toUTF8(std::string_view input, std::string_view fromEncoding
     return convertString(input, sourceEncoding, "UTF-8");
 }
 
-Result<size_t> convertDirectory(const std::filesystem::path& inputDir,
-                              const std::filesystem::path& outputDir,
-                              std::string_view filePattern,
-                              std::string_view fromEncoding,
-                              std::string_view toEncoding,
-                              bool recursive) {
+Result<size_t> convertDirectory(const std::filesystem::path &inputDir,
+                                const std::filesystem::path &outputDir,
+                                const std::string_view fromEncoding,
+                                const std::string_view toEncoding,
+                                const bool recursive) {
     std::error_code ec;
     if (!std::filesystem::exists(inputDir, ec) ||
         !std::filesystem::is_directory(inputDir, ec)) {

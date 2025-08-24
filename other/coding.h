@@ -133,18 +133,16 @@ namespace encoding {
      * @brief 批量转换文件编码
      * @param inputDir 输入目录
      * @param outputDir 输出目录
-     * @param filePattern 文件匹配模式（如 "*.txt"）
      * @param fromEncoding 源编码（空则自动检测）
      * @param toEncoding 目标编码
      * @param recursive 是否递归处理子目录
      * @return 处理成功的文件数量或错误信息
      */
-    Result<size_t> convertDirectory(const std::filesystem::path& inputDir,
-                                  const std::filesystem::path& outputDir,
-                                  std::string_view filePattern = "*",
-                                  std::string_view fromEncoding = "",
-                                  std::string_view toEncoding = "UTF-8",
-                                  bool recursive = false);
+    Result<size_t> convertDirectory(const std::filesystem::path &inputDir,
+                                    const std::filesystem::path &outputDir,
+                                    std::string_view fromEncoding = "",
+                                    std::string_view toEncoding = "UTF-8",
+                                    bool recursive = false);
 
     // 便利函数
     std::string errorToString(EncodingError error);

@@ -2,9 +2,11 @@
 // Created by zerox on 25-8-10.
 //
 #include "tool_core.h"
-#include <regex>
+
+#include <re2/re2.h>
+#include <re2/stringpiece.h>
+
 #include <fstream>
-#include <stdexcept>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
@@ -14,7 +16,7 @@
 #include "../other/coding.h"
 
 // 统一的正则表达式模式
-const std::regex pattern(R"(```([ \t]*)([^ \t\n]*)([^\n]*)\n([\s\S]*?)([ \t]*)```)");
+static const re2::RE2 kPattern(R"(```([ \t]*)([^ \t\n]*)([^\n]*)\n([\s\S]*?)([ \t]*)```)");
 
 // 标准化换行符，将 \r\n 和 \r 都转换为 \n
 std::string normalize_newlines(const std::string& str) {
@@ -33,7 +35,7 @@ std::string normalize_newlines(const std::string& str) {
     return out;
 }
 
-// 读取文件内容的辅助函数 (已重构，支持多编码)
+// 读取文件内容的辅助函数 (支持多编码)
 // 1. 读取原始二进制数据
 // 2. 检测编码
 // 3. 将内容转换为 UTF-8
@@ -76,7 +78,7 @@ bool read_file_content(const fs::path& path, std::string& utf8_content, std::str
     return true;
 }
 
-// 写入文件内容的辅助函数 (已重构，支持多编码)
+// 写入文件内容的辅助函数 (支持多编码)
 // 1. 接收 UTF-8 内容和目标编码
 // 2. 将内容从 UTF-8 转换到目标编码
 // 3. 将转换后的二进制数据写入文件
@@ -144,45 +146,50 @@ bool addl_(const fs::path& path, const std::string& language) {
         }
 
         std::string result;
-        size_t last_pos = 0;
         bool has_modification = false;
 
-        std::sregex_iterator it(content.begin(), content.end(), pattern);
-        std::sregex_iterator end;
+        // 使用RE2进行匹配
+        re2::StringPiece input(content);
+        re2::StringPiece leading_space, lang, rest_of_line, code_content, trailing_space;
+        size_t last_end = 0;
 
-        for (; it != end; ++it) {
-            const std::smatch& match = *it;
+        while (RE2::FindAndConsume(&input, kPattern, &leading_space, &lang, &rest_of_line, &code_content, &trailing_space)) {
+            // 计算当前匹配的位置
+            size_t match_start = content.size() - input.size() -
+                                (3 + leading_space.size() + lang.size() + rest_of_line.size() + 1 +
+                                 code_content.size() + trailing_space.size() + 3);
 
             // 添加代码块之前的内容
-            result += content.substr(last_pos, match.position() - last_pos);
-
-            std::string leading_space = match[1].str();    // ```后的空白
-            std::string lang = match[2].str();             // 语言标识
-            std::string rest_of_line = match[3].str();     // 行的其余部分
-            std::string code_content = match[4].str();     // 代码内容
-            std::string trailing_space = match[5].str();   // ```前的空白
+            result += content.substr(last_end, match_start - last_end);
 
             // 如果没有语言标识，添加语言标记
             if (lang.empty()) {
                 result += "```";
-                result += leading_space;
+                result.append(leading_space.data(), leading_space.size());
                 result += language;
-                result += rest_of_line;
+                result.append(rest_of_line.data(), rest_of_line.size());
                 result += "\n";
-                result += code_content;
-                result += trailing_space;
+                result.append(code_content.data(), code_content.size());
+                result.append(trailing_space.data(), trailing_space.size());
                 result += "```";
                 has_modification = true;
             } else {
                 // 保持原样
-                result += match.str();
+                result += "```";
+                result.append(leading_space.data(), leading_space.size());
+                result.append(lang.data(), lang.size());
+                result.append(rest_of_line.data(), rest_of_line.size());
+                result += "\n";
+                result.append(code_content.data(), code_content.size());
+                result.append(trailing_space.data(), trailing_space.size());
+                result += "```";
             }
 
-            last_pos = match.position() + match.length();
+            last_end = content.size() - input.size();
         }
 
         // 添加最后一个代码块之后的内容
-        result += content.substr(last_pos);
+        result += content.substr(last_end);
 
         // 检查是否有修改
         if (!has_modification) {
@@ -198,9 +205,6 @@ bool addl_(const fs::path& path, const std::string& language) {
         LOG_INFO("成功为文件添加语言标记: " + out_fs_path(path));
         return true;
 
-    } catch (const std::regex_error& e) {
-        LOG_ERROR(std::string("正则表达式错误: ") + e.what());
-        return false;
     } catch (const std::exception& e) {
         LOG_ERROR(std::string("处理文件时发生错误: ") + e.what());
         return false;
@@ -229,40 +233,38 @@ bool updl_(const fs::path& path, const std::string& language) {
         }
 
         std::string result;
-        size_t last_pos = 0;
         bool has_modification = false;
 
-        std::sregex_iterator it(content.begin(), content.end(), pattern);
-        std::sregex_iterator end;
+        // 使用RE2进行匹配
+        re2::StringPiece input(content);
+        re2::StringPiece leading_space, lang, rest_of_line, code_content, trailing_space;
+        size_t last_end = 0;
 
-        for (; it != end; ++it) {
-            const std::smatch& match = *it;
+        while (RE2::FindAndConsume(&input, kPattern, &leading_space, &lang, &rest_of_line, &code_content, &trailing_space)) {
+            // 计算当前匹配的位置
+            size_t match_start = content.size() - input.size() -
+                                (3 + leading_space.size() + lang.size() + rest_of_line.size() + 1 +
+                                 code_content.size() + trailing_space.size() + 3);
 
             // 添加代码块之前的内容
-            result += content.substr(last_pos, match.position() - last_pos);
-
-            std::string leading_space = match[1].str();    // ```后的空白
-            std::string lang = match[2].str();             // 语言标识
-            std::string rest_of_line = match[3].str();     // 行的其余部分
-            std::string code_content = match[4].str();     // 代码内容
-            std::string trailing_space = match[5].str();   // ```前的空白
+            result += content.substr(last_end, match_start - last_end);
 
             // 统一更新语言标记
             result += "```";
-            result += leading_space;
+            result.append(leading_space.data(), leading_space.size());
             result += language;
-            result += rest_of_line;
+            result.append(rest_of_line.data(), rest_of_line.size());
             result += "\n";
-            result += code_content;
-            result += trailing_space;
+            result.append(code_content.data(), code_content.size());
+            result.append(trailing_space.data(), trailing_space.size());
             result += "```";
             has_modification = true;
 
-            last_pos = match.position() + match.length();
+            last_end = content.size() - input.size();
         }
 
         // 添加最后一个代码块之后的内容
-        result += content.substr(last_pos);
+        result += content.substr(last_end);
 
         // 检查是否有修改
         if (!has_modification) {
@@ -278,9 +280,6 @@ bool updl_(const fs::path& path, const std::string& language) {
         LOG_INFO("成功更新文件的语言标记: " + out_fs_path(path));
         return true;
 
-    } catch (const std::regex_error& e) {
-        LOG_ERROR(std::string("正则表达式错误: ") + e.what());
-        return false;
     } catch (const std::exception& e) {
         LOG_ERROR(std::string("处理文件时发生错误: ") + e.what());
         return false;
@@ -303,43 +302,48 @@ bool rmvl_(const fs::path& path) {
         }
 
         std::string result;
-        size_t last_pos = 0;
         bool has_modification = false;
 
-        std::sregex_iterator it(content.begin(), content.end(), pattern);
-        std::sregex_iterator end;
+        // 使用RE2进行匹配
+        re2::StringPiece input(content);
+        re2::StringPiece leading_space, lang, rest_of_line, code_content, trailing_space;
+        size_t last_end = 0;
 
-        for (; it != end; ++it) {
-            const std::smatch& match = *it;
+        while (RE2::FindAndConsume(&input, kPattern, &leading_space, &lang, &rest_of_line, &code_content, &trailing_space)) {
+            // 计算当前匹配的位置
+            size_t match_start = content.size() - input.size() -
+                                (3 + leading_space.size() + lang.size() + rest_of_line.size() + 1 +
+                                 code_content.size() + trailing_space.size() + 3);
 
             // 添加代码块之前的内容
-            result += content.substr(last_pos, match.position() - last_pos);
-
-            std::string leading_space = match[1].str();    // ```后的空白
-            std::string lang = match[2].str();             // 语言标识
-            std::string rest_of_line = match[3].str();     // 行的其余部分
-            std::string code_content = match[4].str();     // 代码内容
-            std::string trailing_space = match[5].str();   // ```前的空白
+            result += content.substr(last_end, match_start - last_end);
 
             // 如果有语言标识，移除它
             if (!lang.empty()) {
                 result += "```";
-                result += leading_space;
+                result.append(leading_space.data(), leading_space.size());
                 result += "\n";
-                result += code_content;
-                result += trailing_space;
+                result.append(code_content.data(), code_content.size());
+                result.append(trailing_space.data(), trailing_space.size());
                 result += "```";
                 has_modification = true;
             } else {
                 // 保持原样
-                result += match.str();
+                result += "```";
+                result.append(leading_space.data(), leading_space.size());
+                result.append(lang.data(), lang.size());
+                result.append(rest_of_line.data(), rest_of_line.size());
+                result += "\n";
+                result.append(code_content.data(), code_content.size());
+                result.append(trailing_space.data(), trailing_space.size());
+                result += "```";
             }
 
-            last_pos = match.position() + match.length();
+            last_end = content.size() - input.size();
         }
 
         // 添加最后一个代码块之后的内容
-        result += content.substr(last_pos);
+        result += content.substr(last_end);
 
         // 检查是否有修改
         if (!has_modification) {
@@ -354,9 +358,6 @@ bool rmvl_(const fs::path& path) {
         LOG_INFO("成功移除文件的语言标记: " + out_fs_path(path));
         return true;
 
-    } catch (const std::regex_error& e) {
-        LOG_ERROR(std::string("正则表达式错误: ") + e.what());
-        return false;
     } catch (const std::exception& e) {
         LOG_ERROR(std::string("处理文件时发生错误: ") + e.what());
         return false;
@@ -384,28 +385,28 @@ bool delcl_(const fs::path& path, const unsigned int& line) {
         }
 
         std::string result;
-        size_t last_pos = 0;
         bool has_modification = false;
 
-        std::sregex_iterator it(content.begin(), content.end(), pattern);
+        // 使用RE2进行匹配
+        re2::StringPiece input(content);
+        re2::StringPiece leading_space, lang, rest_of_line, code_content, trailing_space;
+        size_t last_end = 0;
 
-        for (std::sregex_iterator end; it != end; ++it) {
-            const std::smatch& match = *it;
+        while (RE2::FindAndConsume(&input, kPattern, &leading_space, &lang, &rest_of_line, &code_content, &trailing_space)) {
+            // 计算当前匹配的位置
+            size_t match_start = content.size() - input.size() -
+                                (3 + leading_space.size() + lang.size() + rest_of_line.size() + 1 +
+                                 code_content.size() + trailing_space.size() + 3);
 
             // 添加代码块之前的内容
-            result += content.substr(last_pos, match.position() - last_pos);
-
-            std::string leading_space = match[1].str();    // ```后的空白
-            std::string lang = match[2].str();             // 语言标识
-            std::string rest_of_line = match[3].str();     // 行的其余部分
-            std::string code_content = match[4].str();     // 代码内容
-            std::string trailing_space = match[5].str();   // ```前的空白
+            result += content.substr(last_end, match_start - last_end);
 
             // 处理代码块内容：删除开头的line行
+            std::string code_str(code_content.data(), code_content.size());
             std::string processed_content;
 
             // 将代码内容按行分割
-            std::istringstream iss(code_content);
+            std::istringstream iss(code_str);
             std::vector<std::string> lines;
             std::string current_line;
 
@@ -415,7 +416,7 @@ bool delcl_(const fs::path& path, const unsigned int& line) {
             }
 
             // 如果原内容以换行符结尾但getline不会包含它，需要特殊处理
-            if (!code_content.empty() && code_content.back() == '\n' &&
+            if (!code_str.empty() && code_str.back() == '\n' &&
                 (lines.empty() || !lines.back().empty())) {
                 lines.emplace_back("");
             }
@@ -431,7 +432,7 @@ bool delcl_(const fs::path& path, const unsigned int& line) {
                 }
 
                 // 如果原内容最后有换行符，保持一致
-                if (!code_content.empty() && code_content.back() == '\n' &&
+                if (!code_str.empty() && code_str.back() == '\n' &&
                     !processed_content.empty()) {
                     processed_content += "\n";
                 }
@@ -439,25 +440,25 @@ bool delcl_(const fs::path& path, const unsigned int& line) {
             // 如果line >= 行数，代码块内容将被清空
 
             // 检查是否有修改
-            if (processed_content != code_content) {
+            if (processed_content != code_str) {
                 has_modification = true;
             }
 
             // 重新组装代码块
             result += "```";
-            result += leading_space;
-            result += lang;
-            result += rest_of_line;
+            result.append(leading_space.data(), leading_space.size());
+            result.append(lang.data(), lang.size());
+            result.append(rest_of_line.data(), rest_of_line.size());
             result += "\n";
             result += processed_content;
-            result += trailing_space;
+            result.append(trailing_space.data(), trailing_space.size());
             result += "```";
 
-            last_pos = match.position() + match.length();
+            last_end = content.size() - input.size();
         }
 
         // 添加最后一个代码块之后的内容
-        result += content.substr(last_pos);
+        result += content.substr(last_end);
 
         // 如果没有修改，返回false
         if (!has_modification) {
@@ -472,9 +473,6 @@ bool delcl_(const fs::path& path, const unsigned int& line) {
         LOG_INFO("成功删除文件代码块的前 " + std::to_string(line) + " 行: " + out_fs_path(path));
         return true;
 
-    } catch (const std::regex_error& e) {
-        LOG_ERROR(std::string("正则表达式错误: ") + e.what());
-        return false;
     } catch (const std::exception& e) {
         LOG_ERROR(std::string("处理文件时发生错误: ") + e.what());
         return false;
