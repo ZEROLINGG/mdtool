@@ -1,6 +1,6 @@
 // other/coding.cpp
 // Created by zerox on 25-8-11.
-// c++ 23
+//
 
 #include "coding.h"
 #include "log.h"
@@ -36,7 +36,7 @@ UchardetDetector& UchardetDetector::operator=(UchardetDetector&& other) noexcept
     return *this;
 }
 
-Result<std::string> UchardetDetector::detect(const std::string_view data) const {
+Result<std::string> UchardetDetector::detect(std::string_view data) {
     if (!detector_) {
         return std::unexpected(EncodingError::DetectorCreationFailed);
     }
@@ -61,7 +61,7 @@ Result<std::string> UchardetDetector::detect(const std::string_view data) const 
     return std::string(charset);
 }
 
-void UchardetDetector::reset() const {
+void UchardetDetector::reset() {
     if (detector_) {
         uchardet_reset(detector_);
     }
@@ -72,28 +72,28 @@ IconvConverter::IconvConverter(std::string_view from, std::string_view to)
     : cd_(iconv_open(std::string(to).c_str(), std::string(from).c_str())) {}
 
 IconvConverter::~IconvConverter() {
-    if (cd_ != reinterpret_cast<libiconv_t>(-1)) {
+    if (cd_ != (iconv_t)-1) {
         iconv_close(cd_);
     }
 }
 
 IconvConverter::IconvConverter(IconvConverter&& other) noexcept : cd_(other.cd_) {
-    other.cd_ = reinterpret_cast<libiconv_t>(-1);
+    other.cd_ = (iconv_t)-1;
 }
 
 IconvConverter& IconvConverter::operator=(IconvConverter&& other) noexcept {
     if (this != &other) {
-        if (cd_ != reinterpret_cast<libiconv_t>(-1)) {
+        if (cd_ != (iconv_t)-1) {
             iconv_close(cd_);
         }
         cd_ = other.cd_;
-        other.cd_ = reinterpret_cast<libiconv_t>(-1);
+        other.cd_ = (iconv_t)-1;
     }
     return *this;
 }
 
-Result<std::string> IconvConverter::convert(std::string_view input) const {
-    if (cd_ == reinterpret_cast<libiconv_t>(-1)) {
+Result<std::string> IconvConverter::convert(std::string_view input) {
+    if (cd_ == (iconv_t)-1) {
         return std::unexpected(EncodingError::ConversionFailed);
     }
 
@@ -158,7 +158,7 @@ Result<std::string> detectFile(const std::filesystem::path& filePath) {
     return detector.detect(std::string_view(buffer.data(), buffer.size()));
 }
 
-Result<std::string> detectString(const std::string_view str) {
+Result<std::string> detectString(std::string_view str) {
     if (str.empty()) {
         return std::string("empty");
     }
@@ -167,9 +167,9 @@ Result<std::string> detectString(const std::string_view str) {
     return detector.detect(str);
 }
 
-Result<std::string> convertString(const std::string_view input,
-                                const std::string_view fromEncoding,
-                                const std::string_view toEncoding) {
+Result<std::string> convertString(std::string_view input,
+                                std::string_view fromEncoding,
+                                std::string_view toEncoding) {
     if (input.empty()) {
         return std::string{};
     }
@@ -291,8 +291,10 @@ Result<size_t> convertDirectory(const std::filesystem::path& inputDir,
 
     auto processFile = [&](const std::filesystem::path& filePath) -> bool {
         const auto relativePath = std::filesystem::relative(filePath, inputDir, ec);
+        const auto outputPath = outputDir / relativePath;
 
-        if (const auto outputPath = outputDir / relativePath; convertFile(filePath, outputPath, fromEncoding, toEncoding)) {
+        auto result = convertFile(filePath, outputPath, fromEncoding, toEncoding);
+        if (result) {
             ++processedCount;
             return true;
         }
