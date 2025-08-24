@@ -20,6 +20,7 @@
 - C++23编译器
 - uchardet（字符编码检测库）
 - iconv（字符编码转换库，Windows和macOS需要）
+- re2（正则库）
 
 ### 编译
 
