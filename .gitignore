@@ -1,0 +1,53 @@
+# 系统文件
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# 编辑器/IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# 压缩文件
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.bz2
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+
+# Java/Android
+*.class
+*.apk
+*.dex
+
+# Node.js
+node_modules/
+
+# 构建产物
+dist/
+build/
+bin/
+obj/
+target/
+cmake-build*/
+
+# 日志
+logs/
+*.log
+
+# 子项目git仓库
+.git/
+
+# 成品目录
+成品/
